@@ -2,14 +2,23 @@ package com.megster.cordova;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.OpenableColumns;
 import android.util.Log;
 
-import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class FileChooser extends CordovaPlugin {
 
@@ -47,6 +56,59 @@ public class FileChooser extends CordovaPlugin {
         callbackContext.sendPluginResult(pluginResult);
     }
 
+    public String getFileName(Activity context,Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private String copyContent(Uri uri) throws IOException, FileNotFoundException {
+        Activity activity = this.cordova.getActivity();
+
+        InputStream in = activity.getContentResolver().openInputStream(uri);
+
+        String name = getFileName(activity, uri);
+
+        return writeToFile(in, new File(activity.getCacheDir(), name));
+    }
+
+    private String writeToFile(InputStream source, File destination) throws IOException {
+        try {
+            OutputStream output = new FileOutputStream(destination);
+            try {
+                byte[] buffer = new byte[4 * 1024]; // or other buffer size
+                int read;
+
+                while ((read = source.read(buffer)) != -1) {
+                    output.write(buffer, 0, read);
+                }
+                output.flush();
+            } finally {
+                output.close();
+            }
+        } finally {
+            source.close();
+        }
+
+        return destination.getAbsolutePath();
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -58,8 +120,16 @@ public class FileChooser extends CordovaPlugin {
 
                 if (uri != null) {
 
-                    Log.w(TAG, uri.toString());
-                    callback.success(uri.toString());
+                    try {
+                        String path = this.copyContent(uri);
+
+                        Log.w(TAG, path);
+                        callback.success(path);
+                    } catch (FileNotFoundException err) {
+                        callback.error(err.toString());
+                    } catch (IOException err) {
+                        callback.error(err.toString());
+                    }
 
                 } else {
 
