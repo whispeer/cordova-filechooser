@@ -1,5 +1,5 @@
 {
-  "name": "cordova-plugin-filechooser",
+  "name": "cordova-filechooser",
   "version": "1.0.1",
   "description": "Cordova FileChooser Plugin",
   "main": "index.js",
@@ -15,6 +15,5 @@
   "bugs": {
     "url": "https://github.com/ihadeed/cordova-filechooser/issues"
   },
-  "homepage": "https://github.com/ihadeed/cordova-filechooser#readme",
-  "devDependencies": {}
+  "homepage": "https://github.com/ihadeed/cordova-filechooser#readme"
 }
