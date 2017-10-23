@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/ihadeed/cordova-filechooser/issues"
   },
-  "homepage": "https://github.com/ihadeed/cordova-filechooser#readme"
+  "homepage": "https://github.com/ihadeed/cordova-filechooser#readme",
+  "devDependencies": {}
 }
